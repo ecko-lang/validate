@@ -14,8 +14,11 @@
 import std.re
 import "./check.ecko"
 
-fn is_number(x) = type_of(x) == "int" or type_of(x) == "float"
-fn is_string(x) = type_of(x) == "string"
+# Named `is_num`/`is_str` rather than `is_number`/`is_string` so they do not
+# shadow the builtins of those names. They are also deliberately narrower than
+# the builtins: `is_number` counts a decimal, these do not.
+fn is_num(x) = type_of(x) == "int" or type_of(x) == "float"
+fn is_str(x) = type_of(x) == "string"
 
 # ---- presence --------------------------------------------------------------
 ## required() -> fails on null. The only rule that does: every other validator
@@ -28,7 +31,7 @@ export fn optional() = fn(value) null
 
 # ---- types (pass null; fail the wrong type) --------------------------------
 ## string() -> fails unless the value is text.
-export fn string() = fn(value) if value == null or is_string(value) { null } else { "must be text" }
+export fn string() = fn(value) if value == null or is_str(value) { null } else { "must be text" }
 ## int() -> fails unless the value is a whole number.
 export fn int() = fn(value) if value == null or type_of(value) == "int" {
     null
@@ -42,7 +45,7 @@ export fn float() = fn(value) if value == null or type_of(value) == "float" {
     "must be a decimal number"
 }
 ## number() -> fails unless the value is an int or a float.
-export fn number() = fn(value) if value == null or is_number(value) {
+export fn number() = fn(value) if value == null or is_num(value) {
     null
 } else {
     "must be a number"
@@ -69,7 +72,7 @@ export fn map() = fn(value) if value == null or type_of(value) == "map" {
 # ---- numbers (pass null and non-numbers) -----------------------------------
 ## min(n) -> fails when a number is below `n`. Non-numbers pass, so the type
 ## error is reported once by `number()` rather than by every rule.
-export fn min(n) = fn(value) if value == null or not is_number(value) {
+export fn min(n) = fn(value) if value == null or not is_num(value) {
     null
 } else if value < n {
     "must be at least {n}"
@@ -77,7 +80,7 @@ export fn min(n) = fn(value) if value == null or not is_number(value) {
     null
 }
 ## max(n) -> fails when a number is above `n`.
-export fn max(n) = fn(value) if value == null or not is_number(value) {
+export fn max(n) = fn(value) if value == null or not is_num(value) {
     null
 } else if value > n {
     "must be at most {n}"
@@ -85,7 +88,7 @@ export fn max(n) = fn(value) if value == null or not is_number(value) {
     null
 }
 ## between(lo, hi) -> fails when a number is outside `lo`..`hi`, inclusive.
-export fn between(lo, hi) = fn(value) if value == null or not is_number(value) {
+export fn between(lo, hi) = fn(value) if value == null or not is_num(value) {
     null
 } else if value < lo or value > hi {
     "must be between {lo} and {hi}"
@@ -93,7 +96,7 @@ export fn between(lo, hi) = fn(value) if value == null or not is_number(value) {
     null
 }
 ## positive() -> fails unless a number is greater than zero.
-export fn positive() = fn(value) if value == null or not is_number(value) {
+export fn positive() = fn(value) if value == null or not is_num(value) {
     null
 } else if value > 0 {
     null
@@ -101,7 +104,7 @@ export fn positive() = fn(value) if value == null or not is_number(value) {
     "must be positive"
 }
 ## negative() -> fails unless a number is less than zero.
-export fn negative() = fn(value) if value == null or not is_number(value) {
+export fn negative() = fn(value) if value == null or not is_num(value) {
     null
 } else if value < 0 {
     null
@@ -111,7 +114,7 @@ export fn negative() = fn(value) if value == null or not is_number(value) {
 
 # ---- strings (pass null and non-strings) -----------------------------------
 ## min_len(n) -> fails when text is shorter than `n` characters.
-export fn min_len(n) = fn(value) if value == null or not is_string(value) {
+export fn min_len(n) = fn(value) if value == null or not is_str(value) {
     null
 } else if len(value) < n {
     "must be at least {n} characters"
@@ -119,7 +122,7 @@ export fn min_len(n) = fn(value) if value == null or not is_string(value) {
     null
 }
 ## max_len(n) -> fails when text is longer than `n` characters.
-export fn max_len(n) = fn(value) if value == null or not is_string(value) {
+export fn max_len(n) = fn(value) if value == null or not is_str(value) {
     null
 } else if len(value) > n {
     "must be at most {n} characters"
@@ -127,7 +130,7 @@ export fn max_len(n) = fn(value) if value == null or not is_string(value) {
     null
 }
 ## len_between(lo, hi) -> fails when text length is outside `lo`..`hi`.
-export fn len_between(lo, hi) = fn(value) if value == null or not is_string(value) {
+export fn len_between(lo, hi) = fn(value) if value == null or not is_str(value) {
     null
 } else if len(value) < lo or len(value) > hi {
     "must be between {lo} and {hi} characters"
@@ -138,7 +141,7 @@ export fn len_between(lo, hi) = fn(value) if value == null or not is_string(valu
 ##
 ## `msg` replaces the default "has an invalid format", which is worth setting -
 ## a regex in an error message helps nobody.
-export fn pattern(re_pat, msg = null) = fn(value) if value == null or not is_string(value) {
+export fn pattern(re_pat, msg = null) = fn(value) if value == null or not is_str(value) {
     null
 } else if re.test(re_pat, value) {
     null
@@ -171,7 +174,7 @@ export fn one_of(options) = fn(value) if value == null {
 ## non_empty() -> fails on empty text or an empty list.
 export fn non_empty() = fn(value) if value == null {
     null
-} else if not (is_string(value) or type_of(value) == "list") {
+} else if not (is_str(value) or type_of(value) == "list") {
     null
 } else if len(value) == 0 {
     "must not be empty"
