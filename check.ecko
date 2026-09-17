@@ -1,7 +1,7 @@
 # check - the validation runner.
 #
 # A schema maps each field to a list of validators; a validator is a function
-# `|value| -> null (pass) | message (fail)`. `check` runs them all and collects
+# `fn(value) -> null (pass) | message (fail)`. `check` runs them all and collects
 # every failure. This file is independent of validators.ecko - it only runs the
 # functions a schema holds.
 

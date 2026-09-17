@@ -1,6 +1,6 @@
 # validate - a data/input validation library written in Ecko.
 #
-# A validator is a function `|value| -> null (pass) | message (fail)`. A schema
+# A validator is a function `fn(value) -> null (pass) | message (fail)`. A schema
 # maps each field to a list of them; `check` runs them all and collects every
 # failure. Pure computation - no capabilities.
 #

@@ -1,6 +1,6 @@
 # validators - the built-in validator constructors.
 #
-# Each returns a validator function `|value| -> null (pass) | message (fail)`.
+# Each returns a validator function `fn(value) -> null (pass) | message (fail)`.
 # The invariant that keeps collect-all clean and crash-free: every validator
 # checks exactly ONE concern and passes (null) on a null or wrong-typed value -
 # so only its dedicated type/presence rule reports that error, and no validator

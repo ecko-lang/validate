@@ -5,7 +5,7 @@ Validate a form submission, an API body, or a config map against a schema of
 composable rules, and get back every error at once.
 
 Built on Ecko's first-class functions: **a validator is just a function**
-`|value| -> null (pass) | message (fail)`, implemented with `std.re` and the
+`fn(value) -> null (pass) | message (fail)`, implemented with `std.re` and the
 builtins.
 
 ## Install
@@ -65,11 +65,13 @@ yields exactly `["is required"]` (no cascade), on `"abc"` yields
 A custom rule is just a function:
 
 ```ecko
-even = |x| if x == null { null } else if x % 2 == 0 { null } else { "must be even" }
+even = fn(x) if x == null { null } else if x % 2 == 0 { null } else { "must be even" }
 schema = { n: [v.int(), even] }
 ```
 
-## Validators
+## API
+
+### Validators
 
 | Group | Validators |
 |---|---|
@@ -81,7 +83,7 @@ schema = { n: [v.int(), even] }
 | Collections | `non_empty()`, `each(validator)` |
 | Nested | `shape(schema)` |
 
-## Runner
+### Runner
 
 | Function | Description |
 |---|---|
