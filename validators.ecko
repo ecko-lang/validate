@@ -59,8 +59,9 @@ export fn int() = fn(value) if value == null or type_of(value) == "int" {
 } else {
     "must be a whole number"
 }
-## float() -> fails unless the value is a binary float. A `decimal` is not one:
-## the two are different types and `decimal()` is the rule for money.
+## float() -> fails unless the value is a binary float. A `decimal` is not one -
+## they are different types - so use `number()` for a value that may be either,
+## which is what a price usually is.
 export fn float() = fn(value) if value == null or type_of(value) == "float" {
     null
 } else {
