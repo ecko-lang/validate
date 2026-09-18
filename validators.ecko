@@ -15,10 +15,31 @@ import std.re
 import "./check.ecko"
 
 # Named `is_num`/`is_str` rather than `is_number`/`is_string` so they do not
-# shadow the builtins of those names. They are also deliberately narrower than
-# the builtins: `is_number` counts a decimal, these do not.
-fn is_num(x) = type_of(x) == "int" or type_of(x) == "float"
+# shadow the builtins of those names.
+#
+# `is_num` counts a decimal, which the builtin has always done and this once
+# did not. `decimal` is the money type, and money is what a form validator
+# meets more than anything else, so `19.99m` failing `number()` with "must be
+# a number" was wrong in the one case the rule exists for.
+fn is_num(x) = is_number(x)
 fn is_str(x) = type_of(x) == "string"
+
+# Whether `<` and `>` will answer for this pair rather than raise.
+#
+# Ecko refuses to compare a decimal with a float, in either direction, and
+# refuses to convert between them: exact base-10 and binary floating point
+# answer different questions, and picking one silently is how money goes
+# wrong. That is a category error rather than an oversight, so a schema
+# pairing them is a mistake in the schema - and this package promises never to
+# raise from running `<` on the wrong type, so it is reported rather than
+# thrown.
+fn comparable(a, b) = not (type_of(a) == "decimal" and type_of(b) == "float" or type_of(a) == "float" and type_of(b) == "decimal")
+
+# The message for that mistake, naming the fix rather than the rule.
+# `core.string` rather than `string`: this module exports a `string()`
+# validator, which shadows the builtin of that name inside it.
+fn bound_mismatch(bound) = "cannot compare a decimal value with the float bound {core.string(bound)} - " +
+    "write the bound as a decimal, e.g. {core.string(bound)}m"
 
 # ---- presence --------------------------------------------------------------
 ## required() -> fails on null. The only rule that does: every other validator
@@ -38,13 +59,14 @@ export fn int() = fn(value) if value == null or type_of(value) == "int" {
 } else {
     "must be a whole number"
 }
-## float() -> fails unless the value is a decimal number.
+## float() -> fails unless the value is a binary float. A `decimal` is not one:
+## the two are different types and `decimal()` is the rule for money.
 export fn float() = fn(value) if value == null or type_of(value) == "float" {
     null
 } else {
-    "must be a decimal number"
+    "must be a float"
 }
-## number() -> fails unless the value is an int or a float.
+## number() -> fails unless the value is an int, a float or a decimal.
 export fn number() = fn(value) if value == null or is_num(value) {
     null
 } else {
@@ -74,6 +96,8 @@ export fn map() = fn(value) if value == null or type_of(value) == "map" {
 ## error is reported once by `number()` rather than by every rule.
 export fn min(n) = fn(value) if value == null or not is_num(value) {
     null
+} else if not comparable(value, n) {
+    bound_mismatch(n)
 } else if value < n {
     "must be at least {n}"
 } else {
@@ -82,6 +106,8 @@ export fn min(n) = fn(value) if value == null or not is_num(value) {
 ## max(n) -> fails when a number is above `n`.
 export fn max(n) = fn(value) if value == null or not is_num(value) {
     null
+} else if not comparable(value, n) {
+    bound_mismatch(n)
 } else if value > n {
     "must be at most {n}"
 } else {
@@ -90,6 +116,10 @@ export fn max(n) = fn(value) if value == null or not is_num(value) {
 ## between(lo, hi) -> fails when a number is outside `lo`..`hi`, inclusive.
 export fn between(lo, hi) = fn(value) if value == null or not is_num(value) {
     null
+} else if not comparable(value, lo) {
+    bound_mismatch(lo)
+} else if not comparable(value, hi) {
+    bound_mismatch(hi)
 } else if value < lo or value > hi {
     "must be between {lo} and {hi}"
 } else {

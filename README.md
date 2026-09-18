@@ -62,6 +62,25 @@ yields exactly `["is required"]` (no cascade), on `"abc"` yields
 **Fields are optional by default**; `required()` is the only rule that fails on
 `null`. There is **no coercion** - validation checks, it never transforms.
 
+### Money
+
+`decimal` is Ecko's exact type and the one a price arrives as, so `number()`
+counts it and the range rules compare it:
+
+```ecko
+schema = { price: [v.required(), v.number(), v.min(0m)] }
+v.check({ price: 19.99m }, schema)     # {}
+```
+
+Write a **decimal** bound for a decimal value. Ecko refuses to compare a
+decimal with a float in either direction - exact base-10 and binary floating
+point answer different questions, and choosing one silently is how money goes
+wrong - so `v.min(10.5)` against `19.99m` reports the mismatch and tells you to
+write `v.min(10.5m)`. An **int** bound works with either, so `v.min(0)` is fine.
+
+`float()` means the float type specifically. A decimal is not one, and a float
+is not a decimal; `number()` is the rule that accepts any of the three.
+
 A custom rule is just a function:
 
 ```ecko
@@ -76,8 +95,8 @@ schema = { n: [v.int(), even] }
 | Group | Validators |
 |---|---|
 | Presence | `required()`, `optional()` |
-| Types | `string()`, `int()`, `float()`, `number()`, `bool()`, `list()`, `map()` |
-| Numbers | `min(n)`, `max(n)`, `between(lo, hi)`, `positive()`, `negative()` |
+| Types | `string()`, `int()`, `float()`, `number()` (int, float **or decimal**), `bool()`, `list()`, `map()` |
+| Numbers | `min(n)`, `max(n)`, `between(lo, hi)`, `positive()`, `negative()` - see [Money](#money) for decimal bounds |
 | Strings | `min_len(n)`, `max_len(n)`, `len_between(lo, hi)`, `pattern(re, msg?)`, `email()`, `url()` |
 | Membership | `one_of(options)` |
 | Collections | `non_empty()`, `each(validator)` |

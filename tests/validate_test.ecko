@@ -95,3 +95,59 @@ test.case("collects all failures across fields", fn() {
         { name: ["is required"], age: ["must be a whole number"] },
     )
 })
+
+# --- decimals -----------------------------------------------------------------
+#
+# `decimal` is the money type, and money is what a form validator meets most.
+# The numeric rules used to reject it: a private helper counted only int and
+# float, so `19.99m` failed `number()` with "must be a number".
+
+test.case("number accepts a decimal", fn() {
+    test.eq(v.check_value(19.99m, [v.number()]), [])
+    test.eq(v.check_value(0m, [v.number()]), [])
+    test.eq(v.check_value(-5.50m, [v.number()]), [])
+})
+
+test.case("a decimal price passes a realistic money schema", fn() {
+    schema = { price: [v.required(), v.number(), v.min(0m)] }
+    test.eq(v.check({ price: 19.99m }, schema), {})
+    test.eq(v.check({ price: -1.00m }, schema), { price: ["must be at least 0"] })
+})
+
+test.case("the range rules compare decimals against int bounds", fn() {
+    test.eq(v.check_value(19.99m, [v.min(10)]), [])
+    test.eq(v.check_value(19.99m, [v.max(10)]), ["must be at most 10"])
+    test.eq(v.check_value(19.99m, [v.between(10, 20)]), [])
+    test.eq(v.check_value(5.00m, [v.positive()]), [])
+    test.eq(v.check_value(-5.00m, [v.negative()]), [])
+})
+
+test.case("the range rules compare decimals against decimal bounds", fn() {
+    test.eq(v.check_value(19.99m, [v.min(10.50m)]), [])
+    test.eq(v.check_value(19.99m, [v.max(10.50m)]), ["must be at most 10.50"])
+})
+
+# Ecko refuses to compare a decimal with a float in either direction - it is a
+# category error, not an oversight, and there is no conversion between them
+# that is not lossy. A validator must not crash on it: `check` collects
+# messages, and the package promises never to raise from running `<` on the
+# wrong type. So the schema author is told what to write instead.
+test.case("a float bound against a decimal value explains itself", fn() {
+    got = v.check_value(19.99m, [v.min(10.5)])
+    test.eq(len(got), 1, "one message")
+    test.ok(contains(got[0], "decimal"), "names the problem: {got[0]}")
+    test.ok(contains(got[0], "10.5m"), "shows the fix: {got[0]}")
+})
+
+test.case("float() does not claim a decimal is not a decimal", fn() {
+    # The old message was "must be a decimal number", which rejected 19.99m by
+    # telling the reader it was not a decimal.
+    got = v.check_value(19.99m, [v.float()])
+    test.eq(len(got), 1, "one message")
+    test.ok(not contains(got[0], "must be a decimal number"), "got: {got[0]}")
+})
+
+test.case("int() still rejects a decimal", fn() {
+    test.eq(v.check_value(19.99m, [v.int()]), ["must be a whole number"])
+    test.eq(v.check_value(3, [v.int()]), [])
+})
