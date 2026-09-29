@@ -47,8 +47,11 @@ export fn is_valid(data, schema) = len(keys(check(data, schema))) == 0
 ## returns under `errors`, so a handler can render per-field messages.
 ##
 ## example:
-##   try { user = validate.validate(body, schema) }
-##   catch e { respond(422, e.errors) }
+##   try {
+##       user = validate.validate(body, schema)
+##   } catch (e) {
+##       respond(422, e.errors)
+##   }
 export fn validate(data, schema) {
     errors = check(data, schema)
     if len(keys(errors)) == 0 {
