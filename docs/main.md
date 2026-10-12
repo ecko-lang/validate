@@ -9,7 +9,7 @@ than the first one. A field absent from `data` is validated as null, which
 only `required()` objects to.
 
 ```ecko
-errors = validate.check(form, { email: [v.required(), v.email()] })
+errors = v.check(form, { email: [v.required(), v.email()] })
 ```
 
 ## `check_value(value, rules)`
@@ -33,8 +33,11 @@ The raised error has kind `"validation"` and carries the same map `check`
 returns under `errors`, so a handler can render per-field messages.
 
 ```ecko
-try { user = validate.validate(body, schema) }
-catch e { respond(422, e.errors) }
+try {
+    user = validate.validate(body, schema)
+} catch (e) {
+    respond(422, e.errors)
+}
 ```
 
 ## `required()`
@@ -57,11 +60,13 @@ int() -> fails unless the value is a whole number.
 
 ## `float()`
 
-float() -> fails unless the value is a decimal number.
+float() -> fails unless the value is a binary float. A `decimal` is not one -
+they are different types - so use `number()` for a value that may be either,
+which is what a price usually is.
 
 ## `number()`
 
-number() -> fails unless the value is an int or a float.
+number() -> fails unless the value is an int, a float or a decimal.
 
 ## `bool()`
 

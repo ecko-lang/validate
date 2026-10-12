@@ -12,7 +12,7 @@
 ## only `required()` objects to.
 ##
 ## example:
-##   errors = validate.check(form, { email: [v.required(), v.email()] })
+##   errors = v.check(form, { email: [v.required(), v.email()] })
 export fn check(data, schema) {
     mut errors = empty_map()
     for field in keys(schema) {

@@ -20,20 +20,19 @@ and pins a file-tree hash in `ecko.sum`.
 ## Usage
 
 ```ecko
-import validate
-v = validate                       # `import ... as` is not supported yet
+import validate as v
 
 schema = {
-    name:  [v.required(), v.string(), v.min_len(2)],
+    name: [v.required(), v.string(), v.min_len(2)],
     email: [v.required(), v.email()],
-    age:   [v.int(), v.min(18)],
-    role:  [v.one_of(["admin", "member", "guest"])],
-    tags:  [v.each(v.string())],
+    age: [v.int(), v.min(18)],
+    role: [v.one_of(["admin", "member", "guest"])],
+    tags: [v.each(v.string())],
 }
 
-errors = v.check(data, schema)     # {} = valid, else { field: [messages] }
+errors = v.check(data, schema)  # {} = valid, else { field: [messages] }
 
-if v.is_valid(data, schema) { ... }
+if v.is_valid(data, schema) { save(data) }
 
 # validate() returns the data, or raises a kind-"validation" error you can catch
 clean = try { v.validate(data, schema) } catch (e) { get(e, "errors") }
@@ -58,7 +57,7 @@ v.check(
 Each validator checks **exactly one** concern and passes (`null`) on a `null` or
 wrong-typed value - so `[v.required(), v.int(), v.min(18)]` on a missing field
 yields exactly `["is required"]` (no cascade), on `"abc"` yields
-`["must be a whole number"]`, and never crashes by running `<` on a string.
+`["must be a whole number"]`, and never runs `<` on a string.
 **Fields are optional by default**; `required()` is the only rule that fails on
 `null`. There is **no coercion** - validation checks, it never transforms.
 
